@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Plus, UserCog } from 'lucide-react';
+import { Plus, UserCog } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ProfilesDB, sb } from '../lib/supabase';
 import type { Profile } from '../types';
@@ -51,7 +51,7 @@ export default function Equipe() {
       // A better way is using a server-side function, but for now we try to use standard signUp.
       // ACTUALLY: Supabase standard signUp logs the current user out or changes session if auto confirm is on.
       // We will show a warning.
-      const { data, error } = await sb.auth.signUp({
+      const { error } = await sb.auth.signUp({
         email: newEmail,
         password: newPassword,
         options: {

@@ -23,7 +23,6 @@ function genParticle(id: number): Particle {
 
 export default function FireMeta({ stats }: Props) {
   const [meta, setMeta] = useState(0);
-  const [obs, setObs] = useState('');
   const [inputMeta, setInputMeta] = useState('');
   const [inputObs, setInputObs] = useState('');
   const [saving, setSaving] = useState(false);
@@ -35,7 +34,7 @@ export default function FireMeta({ stats }: Props) {
 
   useEffect(() => {
     MetasDB.getHoje().then(m => {
-      setMeta(m.meta); setObs(m.observacao);
+      setMeta(m.meta);
       setInputMeta(String(m.meta || '')); setInputObs(m.observacao);
     });
   }, []);
@@ -63,7 +62,7 @@ export default function FireMeta({ stats }: Props) {
     setSaving(true);
     const val = Number(inputMeta) || 0;
     await MetasDB.setHoje(val, inputObs);
-    setMeta(val); setObs(inputObs);
+    setMeta(val);
     setSaving(false);
   };
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { LeadsDB, ProfilesDB } from '../../lib/supabase';
-import type { Lead, Profile } from '../../types';
+import type { Lead, Profile, TipoFoto, StatusPedido, StatusPagamento } from '../../types';
 import { useAuth } from '../../App';
 
 interface Props {
@@ -12,14 +12,20 @@ interface Props {
   onSaved: () => void;
 }
 
-const defaultForm = {
-  nome: '', whatsapp: '', qtdFotos: 1, tipo: 'padrao' as const,
-  statusPedido: 'aguardando' as const, statusPagamento: 'pendente' as const,
+type FormState = {
+  nome: string; whatsapp: string; qtdFotos: number;
+  tipo: TipoFoto; statusPedido: StatusPedido; statusPagamento: StatusPagamento;
+  valorRecebido: number; observacao: string; vendedorId: string; editorId: string;
+};
+
+const defaultForm: FormState = {
+  nome: '', whatsapp: '', qtdFotos: 1, tipo: 'padrao',
+  statusPedido: 'aguardando', statusPagamento: 'pendente',
   valorRecebido: 0, observacao: '', vendedorId: '', editorId: ''
 };
 
 export default function LeadModal({ open, lead, onClose, onSaved }: Props) {
-  const [form, setForm] = useState(defaultForm);
+  const [form, setForm] = useState<FormState>(defaultForm);
   const [saving, setSaving] = useState(false);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const { profile: currentUser } = useAuth();
@@ -53,7 +59,7 @@ export default function LeadModal({ open, lead, onClose, onSaved }: Props) {
     }
     setSaving(true);
     try {
-      const dataToSave = { ...form };
+      const dataToSave: any = { ...form };
       if (!dataToSave.vendedorId) delete dataToSave.vendedorId;
       if (!dataToSave.editorId) delete dataToSave.editorId;
 

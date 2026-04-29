@@ -1,4 +1,4 @@
-import { motion, useMotionValue, useSpring } from 'framer-motion';
+import { motion, useMotionValue } from 'framer-motion';
 import { useEffect } from 'react';
 import { fmtMoney } from '../../lib/utils';
 import styles from './MetricCard.module.css';
@@ -15,7 +15,6 @@ interface Props {
 
 export default function MetricCard({ icon, label, value, color = '#7c3aed', isMoney = false, delay = 0 }: Props) {
   const count = useMotionValue(0);
-  const spring = useSpring(count, { stiffness: 80, damping: 18 });
 
   useEffect(() => {
     const timeout = setTimeout(() => { count.set(value); }, delay * 200);
