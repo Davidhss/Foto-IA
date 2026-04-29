@@ -39,7 +39,12 @@ export default function App() {
   useEffect(() => {
     sb.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) AuthDB.getProfile(session.user.id).then(setProfile);
+      if (session) {
+        AuthDB.getProfile(session.user.id).then(p => {
+          setProfile(p);
+          setLoading(false);
+        });
+      }
       else setLoading(false);
     });
 
