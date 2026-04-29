@@ -43,6 +43,9 @@ export default function App() {
         AuthDB.getProfile(session.user.id).then(p => {
           setProfile(p);
           setLoading(false);
+        }).catch(err => {
+          console.error("Erro ao carregar perfil:", err);
+          setLoading(false);
         });
       }
       else setLoading(false);
@@ -53,6 +56,9 @@ export default function App() {
       if (session) {
         AuthDB.getProfile(session.user.id).then(p => {
           setProfile(p);
+          setLoading(false);
+        }).catch(err => {
+          console.error("Erro ao carregar perfil onAuthChange:", err);
           setLoading(false);
         });
       } else {

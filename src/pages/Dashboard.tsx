@@ -23,21 +23,29 @@ export default function Dashboard() {
   const todayLabel = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
   useEffect(() => {
-    if (!profile) return;
-    (async () => {
-      let all = await LeadsDB.all();
-      
-      // Filter if not admin
-      if (profile.role !== 'admin') {
-        all = all.filter(l => l.vendedorId === profile.id || l.editorId === profile.id);
-      } else {
-        const profs = await ProfilesDB.all();
-        setProfiles(profs);
-      }
-
-      setLeads(all);
-      setStats(await LeadsDB.stats(all));
+    if (!profile) {
       setLoading(false);
+      return;
+    }
+    (async () => {
+      try {
+        let all = await LeadsDB.all();
+        
+        // Filter if not admin
+        if (profile.role !== 'admin') {
+          all = all.filter(l => l.vendedorId === profile.id || l.editorId === profile.id);
+        } else {
+          const profs = await ProfilesDB.all();
+          setProfiles(profs);
+        }
+
+        setLeads(all);
+        setStats(await LeadsDB.stats(all));
+      } catch (e) {
+        console.error("Dashboard error", e);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [profile]);
 
@@ -84,9 +92,15 @@ export default function Dashboard() {
             <div className="icon" style={{ fontSize: 48 }}>⏳</div>
             <p>Carregando dashboard...</p>
           </div>
+        ) : !profile ? (
+          <div className="card mt-20" style={{ padding: 40, textAlign: 'center' }}>
+            <h2 style={{ color: 'var(--red)', marginBottom: 16 }}>⚠️ Banco de Dados Incompleto</h2>
+            <p style={{ color: 'var(--text2)', marginBottom: 24 }}>O seu usuário fez login, mas as tabelas de segurança (perfis) não foram encontradas ou não foi possível carregar seu perfil.</p>
+            <p><strong>Passo obrigatório:</strong> Vá no painel do Supabase, abra o <b>SQL Editor</b> e rode todo o conteúdo do arquivo <code>setup-equipe.sql</code>.</p>
+          </div>
         ) : (
           <>
-            <FireMeta stats={stats} />
+            {profile.role !== 'admin' && <FireMeta stats={stats} />}
 
             {/* Metrics Row 1 */}
             <div className="grid-4 mb-20">
