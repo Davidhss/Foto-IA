@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Lead, Meta, Prompt, LeadStats, Profile } from '../types';
 
-const SUPABASE_URL = 'https://yrbgclsdznmlqnnoprgd.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlyYmdjbHNkem5tbHFubm9wcmdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODY4NjAsImV4cCI6MjA5MzA2Mjg2MH0.ff0RBiLUe_rYHLAaJ2r8YOMzSAY8wGdh64WhsWrpZnI';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
