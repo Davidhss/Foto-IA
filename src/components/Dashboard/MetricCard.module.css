@@ -1,0 +1,25 @@
+.card {
+  position: relative; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 16px;
+  padding: 22px; overflow: hidden;
+  transition: border-color .2s, box-shadow .2s;
+}
+.card:hover {
+  border-color: color-mix(in srgb, var(--card-color, #7c3aed) 40%, transparent);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--card-color, #7c3aed) 15%, transparent);
+}
+.glow {
+  position: absolute; top: -30px; right: -20px;
+  width: 90px; height: 90px; border-radius: 50%;
+  background: color-mix(in srgb, var(--card-color, #7c3aed) 18%, transparent);
+  filter: blur(28px); pointer-events: none;
+}
+.icon { font-size: 26px; margin-bottom: 12px; }
+.value {
+  font-size: 28px; font-weight: 800;
+  color: var(--card-color, #7c3aed);
+  line-height: 1; margin-bottom: 6px;
+  background: linear-gradient(135deg, var(--card-color, #7c3aed), color-mix(in srgb, var(--card-color, #7c3aed) 60%, white));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.label { font-size: 11px; color: var(--text2); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }

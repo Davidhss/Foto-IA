@@ -1,0 +1,53 @@
+export type TipoFoto = 'padrao' | 'premium';
+export type StatusPedido = 'aguardando' | 'previa' | 'entregue' | 'followup' | 'demonstracao';
+export type StatusPagamento = 'pago' | 'pendente' | 'cobrar';
+
+export interface HistoricoItem {
+  status: StatusPedido;
+  data: string;
+}
+
+export interface Lead {
+  id: string;
+  nome: string;
+  whatsapp: string;
+  qtdFotos: number;
+  tipo: TipoFoto;
+  statusPedido: StatusPedido;
+  statusPagamento: StatusPagamento;
+  valorRecebido: number;
+  observacao: string;
+  dataCadastro: string;
+  fotosCliente: string[];
+  fotosProntas: string[];
+  historico: HistoricoItem[];
+}
+
+export interface Meta {
+  data: string;
+  meta: number;
+  observacao: string;
+}
+
+export interface Prompt {
+  id: string;
+  titulo: string;
+  texto: string;
+  tags: string[];
+  imagem: string | null;
+  dataCriacao: string;
+}
+
+export interface LeadStats {
+  total: number;
+  vendas: number;
+  aguardando: number;
+  followUp: number;
+  previas: number;
+  demonstracao: number;
+  entregue: number;
+  pendentes: number;
+  faturamento: number;
+  faturamentoHoje: number;
+  vendasHoje: number;
+}
