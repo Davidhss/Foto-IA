@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { MetasDB } from '../../lib/supabase';
 import { fmtMoney } from '../../lib/utils';
 import type { LeadStats } from '../../types';
@@ -61,9 +62,16 @@ export default function FireMeta({ stats }: Props) {
   const handleSave = async () => {
     setSaving(true);
     const val = Number(inputMeta) || 0;
-    await MetasDB.setHoje(val, inputObs);
-    setMeta(val);
-    setSaving(false);
+    try {
+      await MetasDB.setHoje(val, inputObs);
+      setMeta(val);
+      toast.success('Meta atualizada! 🔥');
+    } catch (e: any) {
+      console.error(e);
+      toast.error('Erro ao salvar meta: ' + e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
