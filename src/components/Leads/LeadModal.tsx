@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { LeadsDB } from '../../lib/supabase';
-import type { Lead } from '../../types';
+import { LeadsDB, ProfilesDB } from '../../lib/supabase';
+import type { Lead, Profile } from '../../types';
+import { useAuth } from '../../App';
 
 interface Props {
   open: boolean;
@@ -14,23 +15,34 @@ interface Props {
 const defaultForm = {
   nome: '', whatsapp: '', qtdFotos: 1, tipo: 'padrao' as const,
   statusPedido: 'aguardando' as const, statusPagamento: 'pendente' as const,
-  valorRecebido: 0, observacao: '',
+  valorRecebido: 0, observacao: '', vendedorId: '', editorId: ''
 };
 
 export default function LeadModal({ open, lead, onClose, onSaved }: Props) {
   const [form, setForm] = useState(defaultForm);
   const [saving, setSaving] = useState(false);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const { profile: currentUser } = useAuth();
   const isEdit = !!lead;
 
   useEffect(() => {
-    if (lead) {
-      setForm({ nome: lead.nome, whatsapp: lead.whatsapp, qtdFotos: lead.qtdFotos, tipo: lead.tipo,
-        statusPedido: lead.statusPedido, statusPagamento: lead.statusPagamento,
-        valorRecebido: lead.valorRecebido, observacao: lead.observacao });
-    } else {
-      setForm(defaultForm);
+    if (open) {
+      ProfilesDB.all().then(setProfiles).catch(console.error);
     }
-  }, [lead, open]);
+  }, [open]);
+
+  useEffect(() => {
+    if (lead) {
+      setForm({ 
+        nome: lead.nome, whatsapp: lead.whatsapp, qtdFotos: lead.qtdFotos, tipo: lead.tipo,
+        statusPedido: lead.statusPedido, statusPagamento: lead.statusPagamento,
+        valorRecebido: lead.valorRecebido, observacao: lead.observacao,
+        vendedorId: lead.vendedorId || '', editorId: lead.editorId || ''
+      });
+    } else {
+      setForm({ ...defaultForm, vendedorId: currentUser?.id || '' });
+    }
+  }, [lead, open, currentUser]);
 
   const set = (k: string, v: unknown) => setForm(f => ({ ...f, [k]: v }));
 
@@ -41,12 +53,18 @@ export default function LeadModal({ open, lead, onClose, onSaved }: Props) {
     }
     setSaving(true);
     try {
-      if (isEdit && lead) { await LeadsDB.update(lead.id, form); toast.success('Lead atualizada! ✅'); }
-      else { await LeadsDB.create(form); toast.success('Lead cadastrada! 🎉'); }
+      const dataToSave = { ...form };
+      if (!dataToSave.vendedorId) delete dataToSave.vendedorId;
+      if (!dataToSave.editorId) delete dataToSave.editorId;
+
+      if (isEdit && lead) { await LeadsDB.update(lead.id, dataToSave); toast.success('Lead atualizada! ✅'); }
+      else { await LeadsDB.create(dataToSave); toast.success('Lead cadastrada! 🎉'); }
       onSaved();
     } catch { toast.error('Erro ao salvar.'); }
     setSaving(false);
   };
+
+  const isManager = currentUser?.role === 'admin';
 
   return (
     <AnimatePresence>
@@ -65,7 +83,7 @@ export default function LeadModal({ open, lead, onClose, onSaved }: Props) {
           >
             <div className="flex justify-between items-center mb-16">
               <h2 style={{ fontSize: 17, fontWeight: 700 }}>{isEdit ? '✏️ Editar Lead' : '➕ Nova Lead'}</h2>
-              <button className="btn btn-ghost btn-icon btn-sm" onClick={onClose}>✕</button>
+              <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={onClose}>✕</button>
             </div>
 
             <form onSubmit={handleSubmit}>
@@ -112,6 +130,30 @@ export default function LeadModal({ open, lead, onClose, onSaved }: Props) {
                   </select>
                 </div>
               </div>
+              
+              {isManager && (
+                <div className="grid-2" style={{ marginTop: 12, marginBottom: 12, padding: 12, background: 'rgba(0,0,0,0.2)', borderRadius: 8, border: '1px dashed var(--border2)' }}>
+                  <div className="form-group mb-0">
+                    <label className="form-label" style={{ color: 'var(--text2)' }}>👤 Vendedor Responsável</label>
+                    <select className="form-control" value={form.vendedorId} onChange={e => set('vendedorId', e.target.value)}>
+                      <option value="">Não atribuído</option>
+                      {profiles.filter(p => p.role !== 'editor').map(p => (
+                        <option key={p.id} value={p.id}>{p.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group mb-0">
+                    <label className="form-label" style={{ color: 'var(--text2)' }}>🎨 Editor Responsável</label>
+                    <select className="form-control" value={form.editorId} onChange={e => set('editorId', e.target.value)}>
+                      <option value="">Não atribuído</option>
+                      {profiles.map(p => (
+                        <option key={p.id} value={p.id}>{p.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
               <div className="form-group">
                 <label className="form-label">Valor Recebido (R$)</label>
                 <input type="number" className="form-control" min={0} step={0.01} value={form.valorRecebido} onChange={e => set('valorRecebido', +e.target.value)} placeholder="0,00" />
@@ -120,7 +162,7 @@ export default function LeadModal({ open, lead, onClose, onSaved }: Props) {
                 <label className="form-label">Observação</label>
                 <textarea className="form-control" rows={2} value={form.observacao} onChange={e => set('observacao', e.target.value)} placeholder="Notas adicionais..." />
               </div>
-              <div className="flex gap-8" style={{ justifyContent: 'flex-end', marginTop: 8 }}>
+              <div className="flex gap-8" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
                 <button type="button" className="btn btn-ghost" onClick={onClose}>Cancelar</button>
                 <motion.button type="submit" className="btn btn-primary" disabled={saving}
                   whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>

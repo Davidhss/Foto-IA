@@ -1,15 +1,29 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Users, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Users, Sparkles, ShieldCheck, LogOut } from 'lucide-react';
+import { sb } from '../../lib/supabase';
+import { useAuth } from '../../App';
 import styles from './Sidebar.module.css';
 
-const navItems = [
-  { to: '/',        icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/leads',   icon: Users,           label: 'Leads'     },
-  { to: '/prompts', icon: Sparkles,        label: 'Biblioteca'},
-];
-
 export default function Sidebar() {
+  const navigate = useNavigate();
+  const { profile } = useAuth();
+  
+  const navItems = [
+    { to: '/',        icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/leads',   icon: Users,           label: 'Leads'     },
+    { to: '/prompts', icon: Sparkles,        label: 'Biblioteca'},
+  ];
+
+  if (profile?.role === 'admin') {
+    navItems.push({ to: '/equipe', icon: ShieldCheck, label: 'Equipe' });
+  }
+
+  const handleLogout = async () => {
+    await sb.auth.signOut();
+    navigate('/login');
+  };
+
   return (
     <motion.aside
       className={styles.sidebar}
@@ -27,7 +41,7 @@ export default function Sidebar() {
         </motion.div>
         <div className={styles.logoText}>
           <span>Foto IA</span>
-          <small>Gestão</small>
+          <small>{profile ? profile.nome : 'Gestão'}</small>
         </div>
       </div>
 
@@ -54,6 +68,13 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      <div style={{ marginTop: 'auto' }}>
+        <button className={styles.navItem} onClick={handleLogout} style={{ width: '100%', background: 'transparent', border: 'none' }}>
+          <LogOut size={18} strokeWidth={1.8} color="var(--red)" />
+          <span style={{ color: 'var(--red)' }}>Sair</span>
+        </button>
+      </div>
     </motion.aside>
   );
 }

@@ -1,10 +1,41 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Lead, Meta, Prompt, LeadStats } from '../types';
+import type { Lead, Meta, Prompt, LeadStats, Profile } from '../types';
 
 const SUPABASE_URL = 'https://yrbgclsdznmlqnnoprgd.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlyYmdjbHNkem5tbHFubm9wcmdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODY4NjAsImV4cCI6MjA5MzA2Mjg2MH0.ff0RBiLUe_rYHLAaJ2r8YOMzSAY8wGdh64WhsWrpZnI';
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ===== AUTH & PROFILES =====
+export const AuthDB = {
+  async getSession() {
+    const { data: { session }, error } = await sb.auth.getSession();
+    if (error) throw error;
+    return session;
+  },
+  async getProfile(userId?: string): Promise<Profile | null> {
+    const uid = userId || (await this.getSession())?.user.id;
+    if (!uid) return null;
+    const { data, error } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle();
+    if (error) throw error;
+    return data ? { id: data.id, nome: data.nome, role: data.role, createdAt: data.created_at } : null;
+  },
+  async signOut() {
+    await sb.auth.signOut();
+  }
+};
+
+export const ProfilesDB = {
+  async all(): Promise<Profile[]> {
+    const { data, error } = await sb.from('profiles').select('*').order('nome');
+    if (error) throw error;
+    return (data || []).map(r => ({ id: r.id, nome: r.nome, role: r.role, createdAt: r.created_at }));
+  },
+  async updateRole(id: string, role: string) {
+    const { error } = await sb.from('profiles').update({ role }).eq('id', id);
+    if (error) throw error;
+  }
+};
 
 // ===== MAPPERS =====
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,6 +54,8 @@ function rowToLead(r: any): Lead {
     fotosCliente: r.fotos_cliente || [],
     fotosProntas: r.fotos_prontas || [],
     historico: r.historico || [],
+    vendedorId: r.vendedor_id,
+    editorId: r.editor_id,
   };
 }
 
@@ -40,6 +73,8 @@ function leadToRow(d: Partial<Lead>): Record<string, any> {
   if (d.fotosCliente !== undefined) row.fotos_cliente = d.fotosCliente;
   if (d.fotosProntas !== undefined) row.fotos_prontas = d.fotosProntas;
   if (d.historico !== undefined) row.historico = d.historico;
+  if (d.vendedorId !== undefined) row.vendedor_id = d.vendedorId;
+  if (d.editorId !== undefined) row.editor_id = d.editorId;
   return row;
 }
 
@@ -60,6 +95,11 @@ export const LeadsDB = {
   },
 
   async create(d: Omit<Lead, 'id' | 'dataCadastro' | 'fotosCliente' | 'fotosProntas' | 'historico'>): Promise<Lead> {
+    // If vendedorId is not set, set it to the logged in user
+    if (!d.vendedorId) {
+      const session = await AuthDB.getSession();
+      if (session) d.vendedorId = session.user.id;
+    }
     const row = {
       ...leadToRow(d),
       historico: [{ status: d.statusPedido, data: new Date().toISOString() }],
@@ -131,12 +171,22 @@ export const LeadsDB = {
 // ===== METAS =====
 export const MetasDB = {
   async getHoje(): Promise<Meta> {
-    const { data, error } = await sb.from('metas').select('*').eq('data', todayStr()).maybeSingle();
+    const session = await AuthDB.getSession();
+    if (!session) return { data: todayStr(), meta: 0, observacao: '', vendedorId: '' };
+    const uid = session.user.id;
+    const { data, error } = await sb.from('metas')
+      .select('*').eq('data', todayStr()).eq('vendedor_id', uid).maybeSingle();
     if (error) throw error;
-    return data ?? { data: todayStr(), meta: 0, observacao: '' };
+    return data 
+      ? { data: data.data, meta: data.meta, observacao: data.observacao, vendedorId: data.vendedor_id }
+      : { data: todayStr(), meta: 0, observacao: '', vendedorId: uid };
   },
   async setHoje(meta: number, observacao: string): Promise<void> {
-    const { error } = await sb.from('metas').upsert({ data: todayStr(), meta, observacao }, { onConflict: 'data' });
+    const session = await AuthDB.getSession();
+    if (!session) return;
+    const uid = session.user.id;
+    const { error } = await sb.from('metas')
+      .upsert({ data: todayStr(), meta, observacao, vendedor_id: uid }, { onConflict: 'data,vendedor_id' });
     if (error) throw error;
   },
 };

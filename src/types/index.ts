@@ -7,6 +7,13 @@ export interface HistoricoItem {
   data: string;
 }
 
+export interface Profile {
+  id: string;
+  nome: string;
+  role: 'admin' | 'vendedor' | 'editor';
+  createdAt: string;
+}
+
 export interface Lead {
   id: string;
   nome: string;
@@ -21,12 +28,15 @@ export interface Lead {
   fotosCliente: string[];
   fotosProntas: string[];
   historico: HistoricoItem[];
+  vendedorId?: string;
+  editorId?: string;
 }
 
 export interface Meta {
   data: string;
   meta: number;
   observacao: string;
+  vendedorId: string;
 }
 
 export interface Prompt {

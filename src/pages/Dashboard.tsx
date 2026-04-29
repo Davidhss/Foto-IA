@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LeadsDB } from '../lib/supabase';
+import { LeadsDB, ProfilesDB } from '../lib/supabase';
 import { STATUS_PEDIDO, STATUS_PAG, TIPO_FOTO, fmtMoney } from '../lib/utils';
-import type { Lead, LeadStats } from '../types';
+import type { Lead, LeadStats, Profile } from '../types';
 import FireMeta from '../components/Dashboard/FireMeta';
 import MetricCard from '../components/Dashboard/MetricCard';
+import { useAuth } from '../App';
 
 export default function Dashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -14,19 +15,31 @@ export default function Dashboard() {
     previas: 0, demonstracao: 0, entregue: 0, pendentes: 0,
     faturamento: 0, faturamentoHoje: 0, vendasHoje: 0,
   });
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { profile, session } = useAuth();
 
   const todayLabel = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
   useEffect(() => {
+    if (!profile) return;
     (async () => {
-      const all = await LeadsDB.all();
+      let all = await LeadsDB.all();
+      
+      // Filter if not admin
+      if (profile.role !== 'admin') {
+        all = all.filter(l => l.vendedorId === profile.id || l.editorId === profile.id);
+      } else {
+        const profs = await ProfilesDB.all();
+        setProfiles(profs);
+      }
+
       setLeads(all);
       setStats(await LeadsDB.stats(all));
       setLoading(false);
     })();
-  }, []);
+  }, [profile]);
 
   const metrics1 = [
     { icon: '💰', label: 'Faturado Hoje', value: stats.faturamentoHoje, color: '#10b981', isMoney: true },
@@ -43,6 +56,14 @@ export default function Dashboard() {
 
   const demos = leads.filter(l => l.statusPedido === 'demonstracao');
   const recents = leads.slice(0, 8);
+
+  // Admin Leaderboard
+  const isAdmin = profile?.role === 'admin';
+  const leaderboard = isAdmin ? profiles.filter(p => p.role === 'vendedor').map(p => {
+    const pLeads = leads.filter(l => l.vendedorId === p.id);
+    const fatHoje = pLeads.filter(l => l.statusPagamento === 'pago' && l.dataCadastro?.startsWith(new Date().toISOString().slice(0,10))).reduce((s,l) => s + l.valorRecebido, 0);
+    return { ...p, fatHoje, totalVendas: pLeads.length };
+  }).sort((a,b) => b.fatHoje - a.fatHoje) : [];
 
   return (
     <>
@@ -140,6 +161,42 @@ export default function Dashboard() {
                 }
               </motion.div>
             </div>
+
+            {isAdmin && (
+              <motion.div className="card mt-20" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+                <div className="section-header">
+                  <div className="section-title">🏆 Ranking de Vendas da Equipe (Hoje)</div>
+                </div>
+                {leaderboard.length === 0 ? (
+                  <div className="empty-state" style={{ padding: 32 }}><p>Nenhum vendedor cadastrado</p></div>
+                ) : (
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Vendedor</th>
+                          <th>Leads Captados</th>
+                          <th>Faturado Hoje</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leaderboard.map((v, i) => (
+                          <tr key={v.id}>
+                            <td style={{ fontWeight: 'bold', color: i === 0 ? '#fbbf24' : i === 1 ? '#94a3b8' : i === 2 ? '#b45309' : 'inherit' }}>
+                              {i + 1}º
+                            </td>
+                            <td style={{ fontWeight: 600 }}>{v.nome}</td>
+                            <td>{v.totalVendas}</td>
+                            <td style={{ color: 'var(--green)', fontWeight: 700 }}>{fmtMoney(v.fatHoje)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </motion.div>
+            )}
           </>
         )}
       </div>
