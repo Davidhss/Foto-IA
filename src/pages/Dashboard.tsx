@@ -29,16 +29,10 @@ export default function Dashboard() {
     }
     (async () => {
       try {
-        let all = await LeadsDB.all();
+        const all = await LeadsDB.all();
+        const profs = await ProfilesDB.all();
         
-        // Filter if not admin
-        if (profile.role !== 'admin') {
-          all = all.filter(l => l.vendedorId === profile.id || l.editorId === profile.id);
-        } else {
-          const profs = await ProfilesDB.all();
-          setProfiles(profs);
-        }
-
+        setProfiles(profs);
         setLeads(all);
         setStats(await LeadsDB.stats(all));
       } catch (e) {
@@ -65,13 +59,12 @@ export default function Dashboard() {
   const demos = leads.filter(l => l.statusPedido === 'demonstracao');
   const recents = leads.slice(0, 8);
 
-  // Admin Leaderboard
-  const isAdmin = profile?.role === 'admin';
-  const leaderboard = isAdmin ? profiles.filter(p => p.role === 'vendedor').map(p => {
+  // Leaderboard (now public)
+  const leaderboard = profiles.filter(p => p.role === 'vendedor').map(p => {
     const pLeads = leads.filter(l => l.vendedorId === p.id);
     const fatHoje = pLeads.filter(l => l.statusPagamento === 'pago' && l.dataCadastro?.startsWith(new Date().toISOString().slice(0,10))).reduce((s,l) => s + l.valorRecebido, 0);
     return { ...p, fatHoje, totalVendas: pLeads.length };
-  }).sort((a,b) => b.fatHoje - a.fatHoje) : [];
+  }).sort((a,b) => b.fatHoje - a.fatHoje);
 
   return (
     <>
@@ -176,7 +169,6 @@ export default function Dashboard() {
               </motion.div>
             </div>
 
-            {isAdmin && (
               <motion.div className="card mt-20" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                 <div className="section-header">
                   <div className="section-title">🏆 Ranking de Vendas da Equipe (Hoje)</div>
@@ -184,33 +176,41 @@ export default function Dashboard() {
                 {leaderboard.length === 0 ? (
                   <div className="empty-state" style={{ padding: 32 }}><p>Nenhum vendedor cadastrado</p></div>
                 ) : (
-                  <div className="table-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Vendedor</th>
-                          <th>Leads Captados</th>
-                          <th>Faturado Hoje</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {leaderboard.map((v, i) => (
-                          <tr key={v.id}>
-                            <td style={{ fontWeight: 'bold', color: i === 0 ? '#fbbf24' : i === 1 ? '#94a3b8' : i === 2 ? '#b45309' : 'inherit' }}>
-                              {i + 1}º
-                            </td>
-                            <td style={{ fontWeight: 600 }}>{v.nome}</td>
-                            <td>{v.totalVendas}</td>
-                            <td style={{ color: 'var(--green)', fontWeight: 700 }}>{fmtMoney(v.fatHoje)}</td>
+                  <>
+                    {leaderboard[0] && leaderboard[0].fatHoje > 0 && (
+                      <div style={{ background: 'linear-gradient(135deg, rgba(251,191,36,0.1), rgba(217,119,6,0.2))', border: '1px solid rgba(251,191,36,0.3)', padding: 24, borderRadius: 12, marginBottom: 20, textAlign: 'center' }}>
+                        <div style={{ fontSize: 48, marginBottom: 8 }}>👑</div>
+                        <h3 style={{ color: '#fbbf24', fontSize: 24, marginBottom: 8 }}>Rei das Vendas: {leaderboard[0].nome}!</h3>
+                        <p style={{ color: 'var(--text)', fontSize: 16 }}>Chorem, perdedores! O top 1 está amassando nas vendas. Quem vai ter coragem de passar ele?</p>
+                      </div>
+                    )}
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Vendedor</th>
+                            <th>Leads Captados</th>
+                            <th>Faturado Hoje</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {leaderboard.map((v, i) => (
+                            <tr key={v.id}>
+                              <td style={{ fontWeight: 'bold', fontSize: i === 0 ? 18 : 14, color: i === 0 ? '#fbbf24' : i === 1 ? '#94a3b8' : i === 2 ? '#b45309' : 'inherit' }}>
+                                {i === 0 ? '👑 1º' : `${i + 1}º`}
+                              </td>
+                              <td style={{ fontWeight: 600 }}>{v.nome}</td>
+                              <td>{v.totalVendas}</td>
+                              <td style={{ color: 'var(--green)', fontWeight: 700 }}>{fmtMoney(v.fatHoje)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 )}
               </motion.div>
-            )}
           </>
         )}
       </div>

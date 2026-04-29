@@ -70,8 +70,6 @@ export default function LeadModal({ open, lead, onClose, onSaved }: Props) {
     setSaving(false);
   };
 
-  const isManager = currentUser?.role === 'admin';
-
   return (
     <AnimatePresence>
       {open && (
@@ -137,28 +135,26 @@ export default function LeadModal({ open, lead, onClose, onSaved }: Props) {
                 </div>
               </div>
               
-              {isManager && (
-                <div className="grid-2" style={{ marginTop: 12, marginBottom: 12, padding: 12, background: 'rgba(0,0,0,0.2)', borderRadius: 8, border: '1px dashed var(--border2)' }}>
-                  <div className="form-group mb-0">
-                    <label className="form-label" style={{ color: 'var(--text2)' }}>👤 Vendedor Responsável</label>
-                    <select className="form-control" value={form.vendedorId} onChange={e => set('vendedorId', e.target.value)}>
-                      <option value="">Não atribuído</option>
-                      {profiles.filter(p => p.role !== 'editor').map(p => (
-                        <option key={p.id} value={p.id}>{p.nome}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group mb-0">
-                    <label className="form-label" style={{ color: 'var(--text2)' }}>🎨 Editor Responsável</label>
-                    <select className="form-control" value={form.editorId} onChange={e => set('editorId', e.target.value)}>
-                      <option value="">Não atribuído</option>
-                      {profiles.map(p => (
-                        <option key={p.id} value={p.id}>{p.nome}</option>
-                      ))}
-                    </select>
-                  </div>
+              <div className="grid-2" style={{ marginTop: 12, marginBottom: 12, padding: 12, background: 'rgba(0,0,0,0.2)', borderRadius: 8, border: '1px dashed var(--border2)' }}>
+                <div className="form-group mb-0">
+                  <label className="form-label" style={{ color: 'var(--text2)' }}>👤 Vendedor Responsável</label>
+                  <select className="form-control" value={form.vendedorId} onChange={e => set('vendedorId', e.target.value)}>
+                    <option value="">Não atribuído</option>
+                    {profiles.filter(p => p.role !== 'editor').map(p => (
+                      <option key={p.id} value={p.id}>{p.nome}</option>
+                    ))}
+                  </select>
                 </div>
-              )}
+                <div className="form-group mb-0">
+                  <label className="form-label" style={{ color: 'var(--text2)' }}>🎨 Editor Responsável</label>
+                  <select className="form-control" value={form.editorId} onChange={e => set('editorId', e.target.value)}>
+                    <option value="">Não atribuído</option>
+                    {profiles.map(p => (
+                      <option key={p.id} value={p.id}>{p.nome}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
               <div className="form-group">
                 <label className="form-label">Valor Recebido (R$)</label>

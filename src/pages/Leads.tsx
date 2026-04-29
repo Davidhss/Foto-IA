@@ -13,9 +13,6 @@ export default function Leads() {
     if (!profile) return;
     setLoading(true);
     let data = await LeadsDB.all();
-    if (profile.role !== 'admin') {
-      data = data.filter(l => l.vendedorId === profile.id || l.editorId === profile.id);
-    }
     setLeads(data);
     setLoading(false);
   }, [profile]);
