@@ -62,7 +62,14 @@ export default function Dashboard() {
   // Leaderboard (now public)
   const leaderboard = profiles.filter(p => p.role === 'vendedor').map(p => {
     const pLeads = leads.filter(l => l.vendedorId === p.id);
-    const fatHoje = pLeads.filter(l => l.statusPagamento === 'pago' && l.dataCadastro?.startsWith(new Date().toISOString().slice(0,10))).reduce((s,l) => s + l.valorRecebido, 0);
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const fatHoje = pLeads.filter(l => {
+      if (l.statusPagamento !== 'pago' || !l.dataCadastro) return false;
+      const ld = new Date(l.dataCadastro);
+      const lDate = `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
+      return lDate === todayStr;
+    }).reduce((s,l) => s + l.valorRecebido, 0);
     return { ...p, fatHoje, totalVendas: pLeads.length };
   }).sort((a,b) => b.fatHoje - a.fatHoje);
 
