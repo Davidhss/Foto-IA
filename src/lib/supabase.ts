@@ -94,6 +94,14 @@ export const LeadsDB = {
     return (data || []).map(rowToLead);
   },
 
+  // Versão leve para o Dashboard: omite fotos (base64 pesado) que não são necessárias lá
+  async allLean(): Promise<Lead[]> {
+    const cols = 'id,nome,whatsapp,qtd_fotos,tipo,status_pedido,status_pagamento,valor_recebido,observacao,data_cadastro,historico,vendedor_id,editor_id';
+    const { data, error } = await sb.from('leads').select(cols).order('data_cadastro', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(r => ({ ...rowToLead(r), fotosCliente: [], fotosProntas: [] }));
+  },
+
   async get(id: string): Promise<Lead | null> {
     const { data, error } = await sb.from('leads').select('*').eq('id', id).maybeSingle();
     if (error) throw error;

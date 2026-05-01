@@ -29,11 +29,13 @@ export default function Dashboard() {
     }
     (async () => {
       try {
-        const all = await LeadsDB.all();
-        const profs = await ProfilesDB.all();
-        
-        setProfiles(profs);
+        // Busca leads (sem fotos) e profiles em paralelo para economizar tempo
+        const [all, profs] = await Promise.all([
+          LeadsDB.allLean(),
+          ProfilesDB.all(),
+        ]);
         setLeads(all);
+        setProfiles(profs);
         setStats(await LeadsDB.stats(all));
       } catch (e) {
         console.error("Dashboard error", e);
