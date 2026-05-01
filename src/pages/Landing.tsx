@@ -114,7 +114,7 @@ export default function Landing() {
       </section>
 
       {/* ===== PAIN SECTION ===== */}
-      <section style={{ padding: '80px 24px', maxWidth: 1000px, margin: '0 auto' }}>
+      <section style={{ padding: '80px 24px', maxWidth: 1000, margin: '0 auto' }}>
         <motion.div {...fadeUp} style={{ textAlign: 'center', marginBottom: 50 }}>
           <span className={styles.tag}>Você se identifica?</span>
           <h2 className={styles.h2}>A realidade de quem não tem um sistema</h2>
