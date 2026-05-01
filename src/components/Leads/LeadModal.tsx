@@ -8,6 +8,7 @@ import { useAuth } from '../../App';
 interface Props {
   open: boolean;
   lead?: Lead;
+  prefill?: Partial<Lead>;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -24,7 +25,7 @@ const defaultForm: FormState = {
   valorRecebido: 0, observacao: '', vendedorId: '', editorId: ''
 };
 
-export default function LeadModal({ open, lead, onClose, onSaved }: Props) {
+export default function LeadModal({ open, lead, prefill, onClose, onSaved }: Props) {
   const [form, setForm] = useState<FormState>(defaultForm);
   const [saving, setSaving] = useState(false);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -45,10 +46,17 @@ export default function LeadModal({ open, lead, onClose, onSaved }: Props) {
         valorRecebido: lead.valorRecebido, observacao: lead.observacao,
         vendedorId: lead.vendedorId || '', editorId: lead.editorId || ''
       });
+    } else if (prefill) {
+      setForm({ 
+        ...defaultForm, 
+        vendedorId: currentUser?.id || '',
+        nome: prefill.nome || '',
+        whatsapp: prefill.whatsapp || ''
+      });
     } else {
       setForm({ ...defaultForm, vendedorId: currentUser?.id || '' });
     }
-  }, [lead, open, currentUser]);
+  }, [lead, prefill, open, currentUser]);
 
   const set = (k: string, v: unknown) => setForm(f => ({ ...f, [k]: v }));
 

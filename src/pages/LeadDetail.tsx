@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { LeadsDB } from '../lib/supabase';
 import { STATUS_PEDIDO, STATUS_PAG, TIPO_FOTO, fmtMoney, fmtDate, fileToBase64 } from '../lib/utils';
 import type { Lead } from '../types';
+import LeadModal from '../components/Leads/LeadModal';
 
 export default function LeadDetail() {
   const { id } = useParams<{ id: string }>();
@@ -12,6 +13,7 @@ export default function LeadDetail() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
+  const [newSaleOpen, setNewSaleOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!id) return;
@@ -81,6 +83,7 @@ export default function LeadDetail() {
           <span className="badge" style={{ background: sp.bg, color: sp.color }}>{sp.label}</span>
           <span className="badge" style={{ background: spag.bg, color: spag.color }}>{spag.label}</span>
           <a href={`https://wa.me/55${lead.whatsapp.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="btn btn-wa btn-sm">💬 WhatsApp</a>
+          <button className="btn btn-primary btn-sm" onClick={() => setNewSaleOpen(true)}>💰 Nova Venda</button>
           <button className="btn btn-ghost btn-sm" onClick={() => setEditOpen(true)}>✏️ Editar</button>
         </div>
       </div>
@@ -181,6 +184,14 @@ export default function LeadDetail() {
           <EditModal lead={lead} onClose={() => setEditOpen(false)} onSaved={() => { setEditOpen(false); refresh(); }} />
         )}
       </AnimatePresence>
+
+      {/* New Sale Modal */}
+      <LeadModal 
+        open={newSaleOpen} 
+        prefill={{ nome: lead.nome, whatsapp: lead.whatsapp }}
+        onClose={() => setNewSaleOpen(false)} 
+        onSaved={() => { setNewSaleOpen(false); navigate('/leads'); }} 
+      />
     </>
   );
 }
