@@ -78,7 +78,13 @@ function leadToRow(d: Partial<Lead>): Record<string, any> {
   return row;
 }
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 // ===== LEADS =====
 export const LeadsDB = {
@@ -151,7 +157,15 @@ export const LeadsDB = {
   async stats(leads?: Lead[]): Promise<LeadStats> {
     const all = leads ?? await this.all();
     const t = todayStr();
-    const todayLeads = all.filter(l => l.dataCadastro?.startsWith(t));
+    const todayLeads = all.filter(l => {
+      if (!l.dataCadastro) return false;
+      const d = new Date(l.dataCadastro);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const lDate = `${year}-${month}-${day}`;
+      return lDate === t;
+    });
     return {
       total: all.length,
       vendas: all.filter(l => l.statusPagamento === 'pago').length,
