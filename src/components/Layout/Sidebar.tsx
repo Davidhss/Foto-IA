@@ -10,8 +10,8 @@ export default function Sidebar() {
   const { profile } = useAuth();
   
   const navItems = [
-    { to: '/',        icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/leads',   icon: Users,           label: 'Leads'     },
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/leads',     icon: Users,           label: 'Leads'     },
     { to: '/prompts', icon: Sparkles,        label: 'Biblioteca'},
   ];
 
@@ -47,7 +47,7 @@ export default function Sidebar() {
 
       <nav className={styles.nav}>
         {navItems.map(({ to, icon: Icon, label }) => (
-          <NavLink key={to} to={to} end={to === '/'}>
+          <NavLink key={to} to={to} end={to === '/dashboard'}>
             {({ isActive }) => (
               <motion.div
                 className={`${styles.navItem} ${isActive ? styles.active : ''}`}

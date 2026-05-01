@@ -11,6 +11,7 @@ import LeadDetail from './pages/LeadDetail';
 import Prompts from './pages/Prompts';
 import Equipe from './pages/Equipe';
 import Login from './pages/Login';
+import Landing from './pages/Landing';
 import './styles/global.css';
 
 // Contexto de Autenticação
@@ -27,7 +28,7 @@ function ProtectedRoute({ children, adminOnly = false }: { children: React.React
   const { session, profile, loading } = useAuth();
   if (loading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⏳ Carregando...</div>;
   if (!session) return <Navigate to="/login" replace />;
-  if (adminOnly && profile?.role !== 'admin') return <Navigate to="/" replace />;
+  if (adminOnly && profile?.role !== 'admin') return <Navigate to="/dashboard" replace />;
   return <Layout>{children}</Layout>;
 }
 
@@ -74,9 +75,10 @@ export default function App() {
     <AuthContext.Provider value={{ session, profile, loading }}>
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={session ? <Navigate to="/" replace /> : <Login />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <Login />} />
           
-          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
           <Route path="/leads/:id" element={<ProtectedRoute><LeadDetail /></ProtectedRoute>} />
           <Route path="/prompts" element={<ProtectedRoute><Prompts /></ProtectedRoute>} />
