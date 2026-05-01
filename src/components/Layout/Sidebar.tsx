@@ -40,7 +40,7 @@ export default function Sidebar() {
           📸
         </motion.div>
         <div className={styles.logoText}>
-          <span>Foto IA</span>
+          <span>Photo<span style={{ color: '#a855f7' }}>.IA</span></span>
           <small>{profile ? profile.nome : 'Gestão'}</small>
         </div>
       </div>
