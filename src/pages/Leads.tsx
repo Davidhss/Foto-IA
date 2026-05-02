@@ -12,7 +12,7 @@ export default function Leads() {
   const load = useCallback(async () => {
     if (!profile) return;
     setLoading(true);
-    let data = await LeadsDB.all();
+    let data = await LeadsDB.allLean();
     setLeads(data);
     setLoading(false);
   }, [profile]);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LeadsDB, ProfilesDB } from '../lib/supabase';
+import { LeadsDB } from '../lib/supabase';
 import { STATUS_PEDIDO, TIPO_FOTO, fmtMoney } from '../lib/utils';
 import type { Lead, LeadStats, Profile } from '../types';
 import FireMeta from '../components/Dashboard/FireMeta';
@@ -18,7 +18,7 @@ export default function Dashboard() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, teamMemberIds, teamProfiles } = useAuth();
 
   const todayLabel = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -29,13 +29,10 @@ export default function Dashboard() {
     }
     (async () => {
       try {
-        // Busca leads (sem fotos) e profiles em paralelo para economizar tempo
-        const [all, profs] = await Promise.all([
-          LeadsDB.allLean(),
-          ProfilesDB.all(),
-        ]);
+        const memberFilter = teamMemberIds.length > 0 ? teamMemberIds : undefined;
+        const all = await LeadsDB.allLean(memberFilter);
         setLeads(all);
-        setProfiles(profs);
+        setProfiles(teamProfiles.length > 0 ? teamProfiles : [profile]);
         setStats(await LeadsDB.stats(all));
       } catch (e) {
         console.error("Dashboard error", e);
@@ -43,7 +40,7 @@ export default function Dashboard() {
         setLoading(false);
       }
     })();
-  }, [profile]);
+  }, [profile, teamMemberIds, teamProfiles]);
 
   const metrics1 = [
     { icon: '💰', label: 'Faturado Hoje', value: stats.faturamentoHoje, color: '#10b981', isMoney: true },

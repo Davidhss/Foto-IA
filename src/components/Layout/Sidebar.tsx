@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Users, Sparkles, ShieldCheck, LogOut } from 'lucide-react';
+import { ShieldCheck, LogOut } from 'lucide-react';
 import { sb } from '../../lib/supabase';
 import { useAuth } from '../../App';
 import styles from './Sidebar.module.css';
@@ -8,21 +8,44 @@ import styles from './Sidebar.module.css';
 export default function Sidebar() {
   const navigate = useNavigate();
   const { profile } = useAuth();
-  
-  const navItems = [
-    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/leads',     icon: Users,           label: 'Leads'     },
-    { to: '/prompts', icon: Sparkles,        label: 'Biblioteca'},
+
+  const mainNav = [
+    { to: '/dashboard', emoji: '🏠', label: 'Dashboard' },
+    { to: '/leads',     emoji: '👥', label: 'Leads'     },
+    { to: '/prompts',   emoji: '✨', label: 'Biblioteca' },
   ];
 
-  if (profile?.role === 'admin') {
-    navItems.push({ to: '/equipe', icon: ShieldCheck, label: 'Equipe' });
-  }
+  const analyticsNav = [
+    { to: '/analytics', emoji: '📊', label: 'Analytics' },
+    { to: '/ranking',   emoji: '🏆', label: 'Ranking'   },
+  ];
 
   const handleLogout = async () => {
     await sb.auth.signOut();
     navigate('/login');
   };
+
+  const NavItem = ({ to, label, children, end }: { to: string; label: string; children: React.ReactNode; end?: boolean }) => (
+    <NavLink key={to} to={to} end={end}>
+      {({ isActive }) => (
+        <motion.div
+          className={`${styles.navItem} ${isActive ? styles.active : ''}`}
+          whileHover={{ x: 4 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          {isActive && (
+            <motion.div
+              className={styles.activePill}
+              layoutId="active-pill"
+              transition={{ type: 'spring', stiffness: 380, damping: 38 }}
+            />
+          )}
+          {children}
+          <span>{label}</span>
+        </motion.div>
+      )}
+    </NavLink>
+  );
 
   return (
     <motion.aside
@@ -46,26 +69,27 @@ export default function Sidebar() {
       </div>
 
       <nav className={styles.nav}>
-        {navItems.map(({ to, icon: Icon, label }) => (
-          <NavLink key={to} to={to} end={to === '/dashboard'}>
-            {({ isActive }) => (
-              <motion.div
-                className={`${styles.navItem} ${isActive ? styles.active : ''}`}
-                whileHover={{ x: 4 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                {isActive && (
-                  <motion.div
-                    className={styles.activePill}
-                    layoutId="active-pill"
-                    transition={{ type: 'spring', stiffness: 380, damping: 38 }}
-                  />
-                )}
-                <Icon size={18} strokeWidth={isActive ? 2.2 : 1.8} />
-                <span>{label}</span>
-              </motion.div>
-            )}
-          </NavLink>
+        {mainNav.map(({ to, emoji, label }) => (
+          <NavItem key={to} to={to} label={label} end={to === '/dashboard'}>
+            <span style={{ fontSize: 17, lineHeight: 1 }}>{emoji}</span>
+          </NavItem>
+        ))}
+
+        {profile?.role === 'admin' && (
+          <NavItem to="/equipe" label="Equipe">
+            <ShieldCheck size={18} strokeWidth={1.8} />
+          </NavItem>
+        )}
+
+        <div style={{ height: 1, background: 'var(--border)', margin: '10px 4px' }} />
+        <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.8px', color: 'var(--text3)', padding: '0 12px 6px' }}>
+          Inteligência
+        </div>
+
+        {analyticsNav.map(({ to, emoji, label }) => (
+          <NavItem key={to} to={to} label={label}>
+            <span style={{ fontSize: 17, lineHeight: 1 }}>{emoji}</span>
+          </NavItem>
         ))}
       </nav>
 

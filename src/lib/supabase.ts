@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Lead, Meta, Prompt, LeadStats, Profile } from '../types';
+import type { Lead, Meta, Prompt, LeadStats, Profile, Team } from '../types';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -29,12 +29,47 @@ export const ProfilesDB = {
   async all(): Promise<Profile[]> {
     const { data, error } = await sb.from('profiles').select('*').order('nome');
     if (error) throw error;
-    return (data || []).map(r => ({ id: r.id, nome: r.nome, role: r.role, createdAt: r.created_at }));
+    return (data || []).map(r => ({ id: r.id, nome: r.nome, role: r.role, createdAt: r.created_at, teamId: r.team_id }));
+  },
+  async byTeam(teamId: string): Promise<Profile[]> {
+    const { data, error } = await sb.from('profiles').select('*').eq('team_id', teamId).order('nome');
+    if (error) throw error;
+    return (data || []).map(r => ({ id: r.id, nome: r.nome, role: r.role, createdAt: r.created_at, teamId: r.team_id }));
   },
   async updateRole(id: string, role: string) {
     const { error } = await sb.from('profiles').update({ role }).eq('id', id);
     if (error) throw error;
-  }
+  },
+  async updateTeam(id: string, teamId: string | null) {
+    const { error } = await sb.from('profiles').update({ team_id: teamId }).eq('id', id);
+    if (error) throw error;
+  },
+};
+
+// ===== TEAMS =====
+export const TeamsDB = {
+  async getMyTeam(): Promise<{ team: Team; memberIds: string[] } | null> {
+    const session = await AuthDB.getSession();
+    if (!session) return null;
+    const { data: p } = await sb.from('profiles').select('team_id').eq('id', session.user.id).maybeSingle();
+    if (!p?.team_id) return null;
+    const { data: team } = await sb.from('teams').select('*').eq('id', p.team_id).maybeSingle();
+    const { data: members } = await sb.from('profiles').select('id').eq('team_id', p.team_id);
+    if (!team) return null;
+    return {
+      team: { id: team.id, name: team.name, ownerId: team.owner_id, createdAt: team.created_at },
+      memberIds: (members || []).map((m: any) => m.id),
+    };
+  },
+  async create(name: string, ownerId: string): Promise<Team> {
+    const { data, error } = await sb.from('teams').insert({ name, owner_id: ownerId }).select().single();
+    if (error) throw error;
+    return { id: data.id, name: data.name, ownerId: data.owner_id, createdAt: data.created_at };
+  },
+  async rename(id: string, name: string) {
+    const { error } = await sb.from('teams').update({ name }).eq('id', id);
+    if (error) throw error;
+  },
 };
 
 // ===== MAPPERS =====
@@ -95,9 +130,13 @@ export const LeadsDB = {
   },
 
   // Versão leve para o Dashboard: omite fotos (base64 pesado) que não são necessárias lá
-  async allLean(): Promise<Lead[]> {
+  async allLean(memberIds?: string[]): Promise<Lead[]> {
     const cols = 'id,nome,whatsapp,qtd_fotos,tipo,status_pedido,status_pagamento,valor_recebido,observacao,data_cadastro,historico,vendedor_id,editor_id';
-    const { data, error } = await sb.from('leads').select(cols).order('data_cadastro', { ascending: false });
+    let query = sb.from('leads').select(cols).order('data_cadastro', { ascending: false });
+    if (memberIds && memberIds.length > 0) {
+      query = query.in('vendedor_id', memberIds);
+    }
+    const { data, error } = await query;
     if (error) throw error;
     return (data || []).map(r => ({ ...rowToLead(r), fotosCliente: [], fotosProntas: [] }));
   },

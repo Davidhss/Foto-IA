@@ -12,6 +12,14 @@ export interface Profile {
   nome: string;
   role: 'admin' | 'vendedor' | 'editor';
   createdAt: string;
+  teamId?: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  ownerId: string;
+  createdAt: string;
 }
 
 export interface Lead {
